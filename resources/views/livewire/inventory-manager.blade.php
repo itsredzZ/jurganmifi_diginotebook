@@ -179,13 +179,14 @@
                     @forelse ($products as $product)
                         @if ($editingId === $product->id)
                             {{-- ── Inline edit row ── --}}
-                            <tr class="bg-blue-50">
+                            <tr class="bg-blue-50" wire:key="editing-row-{{ $product->id }}">
                                 <td class="px-4 py-2">
-                                    <input wire:model="editName" type="text"
-                                           class="w-full rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"/>
+                                    <input wire:model.blur="editName" type="text"
+                                           class="w-full rounded border border-blue-300 px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 @error('editName') border-red-400 @enderror"/>
+                                    @error('editName')<p class="mt-1 text-[11px] text-red-600">{{ $message }}</p>@enderror
                                 </td>
                                 <td class="px-4 py-2">
-                                    <select wire:model="editCategory"
+                                    <select wire:model.live="editCategory"
                                             class="rounded border border-blue-300 px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
                                         <option value="mifi">Modem/MiFi</option>
                                         <option value="router">Router</option>
@@ -195,30 +196,32 @@
                                     </select>
                                 </td>
                                 <td class="px-4 py-2">
-                                    <input wire:model="editPurchasePrice" type="number" min="0"
-                                           class="w-28 rounded border border-blue-300 px-2 py-1 text-sm text-right font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"/>
+                                    <input wire:model.blur="editPurchasePrice" type="number" min="0"
+                                           class="w-28 rounded border border-blue-300 px-2 py-1 text-sm text-right font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 @error('editPurchasePrice') border-red-400 @enderror"/>
+                                    @error('editPurchasePrice')<p class="mt-1 text-[11px] text-red-600 text-right">{{ $message }}</p>@enderror
                                 </td>
                                 <td class="px-4 py-2">
-                                    <input wire:model="editSellPrice" type="number" min="0"
-                                           class="w-28 rounded border border-blue-300 px-2 py-1 text-sm text-right font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"/>
+                                    <input wire:model.blur="editSellPrice" type="number" min="0"
+                                           class="w-28 rounded border border-blue-300 px-2 py-1 text-sm text-right font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 @error('editSellPrice') border-red-400 @enderror"/>
+                                    @error('editSellPrice')<p class="mt-1 text-[11px] text-red-600 text-right">{{ $message }}</p>@enderror
                                 </td>
                                 <td class="px-4 py-2 text-right text-xs text-gray-400">—</td>
                                 <td class="px-4 py-2">
-                                    <input wire:model="editStockRumah" type="number" min="0"
+                                    <input wire:model.blur="editStockRumah" type="number" min="0"
                                            class="w-16 rounded border border-blue-300 px-2 py-1 text-sm text-right font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"/>
                                 </td>
                                 <td class="px-4 py-2">
-                                    <input wire:model="editStockToko" type="number" min="0"
+                                    <input wire:model.blur="editStockToko" type="number" min="0"
                                            class="w-16 rounded border border-blue-300 px-2 py-1 text-sm text-right font-mono focus:outline-none focus:ring-1 focus:ring-blue-500"/>
                                 </td>
                                 <td class="px-4 py-2 text-right text-xs text-gray-400">—</td>
                                 <td class="px-4 py-2 text-center">
                                     <div class="flex justify-center gap-1">
-                                        <button wire:click="saveEdit"
+                                        <button wire:click="saveEdit" type="button"
                                                 class="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700">
                                             Simpan
                                         </button>
-                                        <button wire:click="cancelEdit"
+                                        <button wire:click="cancelEdit" type="button"
                                                 class="rounded border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50">
                                             Batal
                                         </button>

@@ -5,69 +5,103 @@ namespace App\Livewire;
 use App\Models\Product;
 use App\Models\Sale;
 use Livewire\Component;
+use Livewire\WithFileUploads; // Diperlukan untuk handle upload file di Livewire
+use Maatwebsite\Excel\Facades\Excel;
 
 class SalesRecorder extends Component
 {
-    // Form fields
+    use WithFileUploads;
+
+    // Properti Form Input Manual
+    public string $platform = 'Tokopedia'; 
+    public string $search = '';
     public string $productId = '';
-    public string $quantity  = '1';
-    public string $platform  = '';
-    public string $date      = '';
+    public string $quantity = '1';
+    public string $date = '';
 
-    // Live preview
+    // Properti Modal & Upload Excel
+    public bool $showImportModal = false; // Mengontrol visibility modal popup
+    public string $importPlatform = 'Tokopedia'; // Menyimpan pill marketplace terpilih di modal
+    public $excelFile; // Menampung file spreadsheet mentah
+
+    // Properti Live Preview Transaksi Manual
+    public ?Product $selectedProduct = null;
     public ?int $previewRevenue = null;
-    public ?int $previewProfit  = null;
-
-    // Sales history filter
-    public string $filterMonth = '';
-
-    // Delete confirm
-    public ?int $deletingId = null;
+    public ?int $previewProfit = null;
+    public int $previewMargin = 0; // Menyimpan persentase margin keuntungan
 
     public function mount(): void
     {
-        $this->date        = now()->toDateString();
-        $this->filterMonth = now()->format('Y-m');
+        $this->date = now()->toDateString();
     }
 
-    // ── Reactive preview ─────────────────────────────────────────────────────────
+    // ── AKSI KONTROL MODAL POPUP ───────────────────────────────────────────────
+    public function openImportModal(): void
+    {
+        $this->resetValidation('excelFile');
+        $this->excelFile = null;
+        $this->showImportModal = true;
+    }
 
-    public function updatedProductId(): void  { $this->computePreview(); }
-    public function updatedQuantity(): void   { $this->computePreview(); }
+    public function closeImportModal(): void
+    {
+        $this->showImportModal = false;
+    }
+
+    // ── LOGIKA PRATINJAU / LIVE PREVIEW MANUAL ──────────────────────────────────
+    public function selectProduct($id): void
+    {
+        $this->productId = $id;
+        $this->computePreview();
+    }
+
+    public function updatedQuantity(): void
+    {
+        $this->computePreview();
+    }
 
     private function computePreview(): void
     {
         if ($this->productId && is_numeric($this->quantity) && (int) $this->quantity > 0) {
-            $product = Product::find($this->productId);
-            if ($product) {
+            $this->selectedProduct = Product::find($this->productId);
+            if ($this->selectedProduct) {
                 $qty = (int) $this->quantity;
-                $this->previewRevenue = $product->sell_price * $qty;
-                $this->previewProfit  = ($product->sell_price - $product->purchase_price) * $qty;
+                $this->previewRevenue = $this->selectedProduct->sell_price * $qty;
+                $this->previewProfit = ($this->selectedProduct->sell_price - $this->selectedProduct->purchase_price) * $qty;
+                
+                // Hitung rasio margin keuntungan
+                if ($this->previewRevenue > 0) {
+                    $this->previewMargin = (int) round(($this->previewProfit / $this->previewRevenue) * 100);
+                }
                 return;
             }
         }
+        $this->selectedProduct = null;
         $this->previewRevenue = $this->previewProfit = null;
+        $this->previewMargin = 0;
     }
 
-    // ── Record sale ──────────────────────────────────────────────────────────────
-
+    // ── SIMPAN PENJUALAN MANUAL ──────────────────────────────────────────────────
     public function recordSale(): void
     {
         $this->validate([
             'productId' => 'required|exists:products,id',
             'quantity'  => 'required|integer|min:1',
             'date'      => 'required|date',
-            'platform'  => 'nullable|string|max:100',
-        ], [], [
-            'productId' => 'Produk',
-            'quantity'  => 'Jumlah',
-            'date'      => 'Tanggal',
+            'platform'  => 'required|string|max:100',
+        ], [
+            'productId.required' => 'Silahkan pilih produk dari daftar terlebih dahulu.',
         ]);
 
         $product = Product::findOrFail($this->productId);
         $qty     = (int) $this->quantity;
 
-        // Deduct stock: toko first, then rumah
+        if ($product->total_stock < $qty) {
+            $this->addError('quantity', "Stok tidak cukup! Sisa total stok: {$product->total_stock} unit.");
+            return;
+        }
+
+        // Pengurangan stok cerdas: Kurangi toko dulu, sisanya dari rumah
         $fromToko  = min($qty, $product->stock_toko);
         $fromRumah = $qty - $fromToko;
 
@@ -82,64 +116,129 @@ class SalesRecorder extends Component
             'sell_price'     => $product->sell_price,
             'profit'         => ($product->sell_price - $product->purchase_price) * $qty,
             'date'           => $this->date,
-            'platform'       => $this->platform ?: null,
+            'platform'       => $this->platform,
         ]);
 
-        $this->productId      = '';
-        $this->quantity       = '1';
-        $this->platform       = '';
-        $this->previewRevenue = $this->previewProfit = null;
+        // Reset form input manual
+        $this->productId       = '';
+        $this->search          = '';
+        $this->quantity        = '1';
+        $this->selectedProduct = null;
+        $this->previewRevenue  = $this->previewProfit = null;
+        $this->previewMargin   = 0;
 
-        session()->flash('success', 'Penjualan berhasil dicatat.');
+        session()->flash('success', 'Penjualan manual berhasil dicatat.');
     }
 
-    // ── Delete sale ──────────────────────────────────────────────────────────────
-
-    public function confirmDeleteSale(int $id): void
+    // ── PROSES PARSING & IMPORT EXCEL MARKETPLACE ──────────────────────────────
+    public function importExcel(): void
     {
-        $this->deletingId = $id;
-    }
+        $this->validate([
+            'excelFile' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ], [
+            'excelFile.required' => 'Pilih atau letakkan file laporan Excel Anda.',
+            'excelFile.mimes'    => 'Format file wajib berupa .xlsx, .xls, atau .csv',
+        ]);
 
-    public function deleteSale(): void
-    {
-        if (! $this->deletingId) return;
+        // Baca file spreadsheet menjadi format array
+        $dataSheets = Excel::toArray([], $this->excelFile->getRealPath());
+        $rows = $dataSheets[0] ?? [];
 
-        $sale = Sale::find($this->deletingId);
-        if ($sale) {
-            // Restore stock to rumah
-            if ($product = Product::find($sale->product_id)) {
-                $product->increment('stock_rumah', $sale->quantity);
-            }
-            $sale->delete();
+        if (count($rows) <= 1) {
+            $this->addError('excelFile', 'File Excel kosong atau tidak memiliki baris data.');
+            return;
         }
 
-        $this->deletingId = null;
-        session()->flash('success', 'Penjualan dihapus & stok dikembalikan.');
-    }
+        // Ambil baris pertama sebagai susunan nama kolom (Header)
+        $header = array_map('strtolower', $rows[0]);
+        $colNamaProduk = $colQty = $colTanggal = null;
 
-    public function cancelDelete(): void
-    {
-        $this->deletingId = null;
-    }
+        // Auto-detect kolom berdasarkan kemiripan istilah marketplace umum
+        foreach ($header as $index => $colName) {
+            if (str_contains($colName, 'nama produk') || str_contains($colName, 'product name') || str_contains($colName, 'nama barang')) {
+                $colNamaProduk = $index;
+            }
+            if (str_contains($colName, 'jumlah') || str_contains($colName, 'qty') || str_contains($colName, 'quantity') || str_contains($colName, 'jumlah terjual')) {
+                $colQty = $index;
+            }
+            if (str_contains($colName, 'tanggal') || str_contains($colName, 'date') || str_contains($colName, 'waktu pesanan')) {
+                $colTanggal = $index;
+            }
+        }
 
-    // ── Render ───────────────────────────────────────────────────────────────────
+        if ($colNamaProduk === null || $colQty === null) {
+            $this->addError('excelFile', 'Gagal mengenali struktur kolom. Pastikan file Excel memuat header seperti "Nama Produk" dan "Qty".');
+            return;
+        }
+
+        $importedCount = 0;
+
+        // Iterasi data mulai dari baris ke-2
+        for ($i = 1; $i < count($rows); $i++) {
+            $row = $rows[$i];
+            if (empty($row[$colNamaProduk])) continue;
+
+            $excelProductName = trim($row[$colNamaProduk]);
+            $qty = (int) $row[$colQty];
+
+            // Tentukan tanggal record
+            $saleDate = now()->toDateString();
+            if ($colTanggal !== null && !empty($row[$colTanggal])) {
+                $parsedDate = date('Y-m-d', strtotime(str_replace('/', '-', $row[$colTanggal])));
+                if ($parsedDate && $parsedDate !== '1970-01-01') {
+                    $saleDate = $parsedDate;
+                }
+            }
+
+            if ($qty <= 0) continue;
+
+            // Pencarian produk berbasis kemiripan nama
+            $product = Product::where('name', 'like', '%' . $excelProductName . '%')->first();
+
+            if ($product) {
+                $actualQty = min($qty, $product->total_stock);
+
+                if ($actualQty > 0) {
+                    $fromToko  = min($actualQty, $product->stock_toko);
+                    $fromRumah = $actualQty - $fromToko;
+
+                    if ($fromToko > 0)  $product->decrement('stock_toko',  $fromToko);
+                    if ($fromRumah > 0) $product->decrement('stock_rumah', $fromRumah);
+
+                    Sale::create([
+                        'product_id'     => $product->id,
+                        'product_name'   => $product->name,
+                        'quantity'       => $actualQty,
+                        'purchase_price' => $product->purchase_price,
+                        'sell_price'     => $product->sell_price,
+                        'profit'         => ($product->sell_price - $product->purchase_price) * $actualQty,
+                        'date'           => $saleDate,
+                        'platform'       => $this->importPlatform,
+                    ]);
+                    $importedCount++;
+                }
+            }
+        }
+
+        $this->showImportModal = false;
+        $this->excelFile = null;
+
+        session()->flash('success', "Berhasil mengimpor {$importedCount} baris transaksi dari laporan marketplace.");
+    }
 
     public function render()
     {
-        $products = Product::orderBy('name')->get();
-
-        [$year, $month] = explode('-', $this->filterMonth . '-01');
-        $sales = Sale::whereYear('date', $year)
-            ->whereMonth('date', $month)
-            ->orderByDesc('date')
-            ->orderByDesc('id')
+        $products = Product::when($this->search, function($query) {
+                $query->where('name', 'like', '%' . $this->search . '%');
+            })
+            ->orderBy('name')
             ->get();
 
-        $monthRevenue = $sales->sum(fn ($s) => $s->sell_price * $s->quantity);
-        $monthProfit  = $sales->sum('profit');
+        $recentSales = Sale::orderByDesc('date')
+            ->orderByDesc('id')
+            ->take(3) // Batasi hanya 3 baris riwayat terakhir
+            ->get();
 
-        return view('livewire.sales-recorder', compact(
-            'products', 'sales', 'monthRevenue', 'monthProfit'
-        ));
+        return view('livewire.sales-recorder', compact('products', 'recentSales'));
     }
 }
