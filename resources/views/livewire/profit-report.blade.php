@@ -1,16 +1,13 @@
 <div class="space-y-6">
-    {{-- Header Judul Konten Utama --}}
     <div>
         <h2 class="text-xl font-bold text-gray-900">Laporan Keuntungan</h2>
         <p class="text-xs text-gray-400">Analisis penjualan dan keuntungan bisnis</p>
     </div>
 
-    {{-- FILTER PERIODE PILL BARIS ATAS --}}
+    {{-- FILTER PERIODE --}}
     <div class="rounded-xl border border-gray-100 bg-white p-4 shadow-xs space-y-3">
         <div class="flex flex-wrap items-center gap-2 text-xs font-semibold text-gray-600">
-            <span class="flex items-center gap-1.5 mr-1 text-gray-400">
-                📅 Filter Periode:
-            </span>
+            <span class="flex items-center gap-1.5 mr-1 text-gray-400">📅 Filter Periode:</span>
             @foreach(['Semua', '7 Hari', '30 Hari', 'Bulan Ini', 'Bulan Lalu'] as $per)
                 <button type="button" wire:click="$set('period', '{{ $per }}')"
                         class="rounded-full px-4 py-1.5 font-bold transition-all
@@ -18,14 +15,12 @@
                     {{ $per }}
                 </button>
             @endforeach
-            
             <button type="button" wire:click="$set('period', 'Custom')"
                     class="rounded-full px-4 py-1.5 font-bold transition-all {{ $period === 'Custom' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600' }}">
                 Custom
             </button>
         </div>
 
-        {{-- Form Input Tanggal Tambahan untuk Mode Custom --}}
         @if($period === 'Custom')
             <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-50 text-xs">
                 <input type="date" wire:model="startDate" class="rounded-lg border border-gray-200 p-2 focus:ring-1 focus:ring-blue-500 outline-none font-mono"/>
@@ -38,7 +33,7 @@
         @endif
     </div>
 
-    {{-- KOTAK 4 STAT CARDS UTAMA --}}
+    {{-- 4 STAT CARDS --}}
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-xs flex items-center justify-between">
             <div class="space-y-1">
@@ -79,37 +74,42 @@
         </div>
     </div>
 
-    {{-- PANEL GRAFIK 1: RIWAYAT VOLUME PENJUALAN MULTI TAHUN --}}
+    {{-- PANEL: RIWAYAT VOLUME PENJUALAN --}}
     <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm space-y-5">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-                <h3 class="font-bold text-gray-900 text-sm">Riwayat Volume Penjualan (2018–2026)</h3>
+                <h3 class="font-bold text-gray-900 text-sm">Riwayat Volume Penjualan</h3>
                 <p class="text-[11px] text-gray-400">Total unit terjual per tahun / per bulan</p>
             </div>
             <div class="flex items-center gap-1.5 bg-gray-100 p-1 rounded-lg text-xs font-bold">
-                <button type="button" class="px-3 py-1.5 text-gray-500 rounded bg-transparent">Per Tahun</button>
-                <button type="button" class="px-3 py-1.5 bg-blue-600 text-white rounded shadow-xs">Per Bulan</button>
+                <button type="button" wire:click="setVolumeMode('tahun')"
+                        class="px-3 py-1.5 rounded transition-colors {{ $volumeChartMode === 'tahun' ? 'bg-blue-600 text-white shadow-xs' : 'text-gray-500 bg-transparent' }}">
+                    Per Tahun
+                </button>
+                <button type="button" wire:click="setVolumeMode('bulan')"
+                        class="px-3 py-1.5 rounded transition-colors {{ $volumeChartMode === 'bulan' ? 'bg-blue-600 text-white shadow-xs' : 'text-gray-500 bg-transparent' }}">
+                    Per Bulan
+                </button>
             </div>
         </div>
 
-        {{-- Pilihan Selektor Tahun Aktif --}}
-        <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
-            <span class="text-gray-400 mr-1">Pilih tahun:</span>
-            @foreach([2021, 2022, 2023, 2024, 2025, 2026] as $chartYr)
-                <button type="button" wire:click="$set('selectedChartYear', {{ $chartYr }})"
-                        class="px-3 py-1 rounded-lg border font-bold font-mono transition-all
-                        {{ $selectedChartYear === $chartYr ? 'bg-cyan-500 text-white border-cyan-500' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50' }}">
-                    {{ $chartYr }}
-                </button>
-            @endforeach
-        </div>
+        @if ($volumeChartMode === 'bulan')
+            <div class="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                <span class="text-gray-400 mr-1">Pilih tahun:</span>
+                @foreach([2021, 2022, 2023, 2024, 2025, 2026] as $chartYr)
+                    <button type="button" wire:click="$set('selectedChartYear', {{ $chartYr }})"
+                            class="px-3 py-1 rounded-lg border font-bold font-mono transition-all
+                            {{ $selectedChartYear === $chartYr ? 'bg-cyan-500 text-white border-cyan-500' : 'bg-white text-gray-500 border-gray-200 hover:bg-gray-50' }}">
+                        {{ $chartYr }}
+                    </button>
+                @endforeach
+            </div>
+        @endif
 
-        {{-- Canvas Container Aman Menggunakan wire:ignore --}}
         <div class="relative h-64 w-full" wire:ignore>
             <canvas id="lineVolumeChart"></canvas>
         </div>
 
-        {{-- TABEL REKAP UNIT TOTAL TAHUNAN --}}
         <div class="overflow-x-auto border-t border-gray-100 pt-4">
             <table class="w-full text-xs font-medium font-mono text-center">
                 <thead>
@@ -129,9 +129,8 @@
         </div>
     </div>
 
-    {{-- GRID DUA GRAFIK DI BAGIAN BAWAH --}}
+    {{-- DUA GRAFIK BAWAH --}}
     <div class="grid gap-6 lg:grid-cols-2">
-        {{-- Grafik Kiri: Keuntungan Harian --}}
         <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm space-y-4">
             <div><h3 class="font-bold text-gray-900 text-sm">Keuntungan Harian</h3></div>
             <div class="relative h-60 w-full" wire:ignore>
@@ -139,13 +138,9 @@
             </div>
         </div>
 
-        {{-- Grafik Kanan: Keuntungan per Produk --}}
         <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm space-y-4 relative">
             <div><h3 class="font-bold text-gray-900 text-sm">Keuntungan per Produk</h3></div>
             <div class="relative h-60 w-full flex justify-center items-center" wire:ignore>
-                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-6">
-                    <span class="text-lg font-bold text-blue-600 font-mono">46%</span>
-                </div>
                 <div class="w-full h-full">
                     <canvas id="pieProductProfitChart"></canvas>
                 </div>
@@ -153,13 +148,13 @@
         </div>
     </div>
 
-    {{-- TABEL DETAIL TRANSAKSI BESAR PALING BAWAH --}}
+    {{-- TABEL DETAIL TRANSAKSI --}}
     <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm space-y-4">
         <div>
             <h3 class="font-bold text-gray-900 text-sm">Detail Transaksi</h3>
             <p class="text-[11px] text-gray-400 font-mono">{{ $salesData->count() }} transaksi ditemukan</p>
         </div>
-        
+
         <div class="overflow-x-auto">
             <table class="w-full text-xs text-left">
                 <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-100 tracking-wider">
@@ -176,7 +171,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100 text-gray-700 font-medium">
                     @forelse($salesData as $sale)
-                        @php 
+                        @php
                             $totalRow = $sale->sell_price * $sale->quantity;
                             $rowMargin = $totalRow > 0 ? round(($sale->profit / $totalRow) * 100, 1) : 0;
                         @endphp
@@ -205,32 +200,42 @@
         </div>
     </div>
 
-    {{-- KONTROL GRAFIK TOTAL DI SINI (100% AMAN DARI ERROR HTML PENGGUNA) --}}
     @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // --- 1. SETUP GRAPH UTAMA (LINE CHART) ---
-            const ctxLine = document.getElementById('lineVolumeChart').getContext('2d');
-            let lineChart = new Chart(ctxLine, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'],
-                    datasets: [
-                        { label: '2024', data: @json($line2024), borderColor: '#a855f7', tension: 0.3, pointRadius: 3 },
-                        { label: '2025', data: @json($line2025), borderColor: '#ec4899', tension: 0.3, pointRadius: 3 },
-                        { label: '2026', data: @json($line2026), borderColor: '#06b6d4', tension: 0.4, borderWidth: 3, pointRadius: 4 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } },
-                    scales: { y: { min: 0, max: 120, ticks: { stepSize: 30 } }, x: { grid: { display: false } } }
-                }
-            });
 
-            // --- 2. SETUP GRAPH KONTROL BAWAH KIRI (BAR CHART) ---
+            let volumeChart = null;
+            function renderVolumeChart(payload) {
+                if (volumeChart) volumeChart.destroy();
+                const ctx = document.getElementById('lineVolumeChart').getContext('2d');
+                const isYearly = payload.mode === 'tahun';
+                volumeChart = new Chart(ctx, {
+                    type: isYearly ? 'bar' : 'line',
+                    data: {
+                        labels: payload.labels,
+                        datasets: payload.datasets.map(ds => ({
+                            label: ds.label,
+                            data: ds.data,
+                            borderColor: ds.color,
+                            backgroundColor: isYearly ? ds.color : 'transparent',
+                            tension: 0.3,
+                            borderWidth: isYearly ? 0 : 3,
+                            pointRadius: isYearly ? 0 : 4,
+                            borderRadius: isYearly ? 4 : 0,
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } },
+                        scales: { y: { beginAtZero: true }, x: { grid: { display: false } } }
+                    }
+                });
+            }
+            renderVolumeChart(@json(['mode' => $mode, 'labels' => $labels, 'datasets' => $datasets]));
+            window.addEventListener('refresh-volume-chart', e => renderVolumeChart(e.detail.data));
+
             const ctxBar = document.getElementById('barDailyProfitChart').getContext('2d');
             let barChart = new Chart(ctxBar, {
                 type: 'bar',
@@ -242,14 +247,13 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { 
-                        y: { ticks: { callback: function(v) { return 'Rp ' + v.toLocaleString('id-ID'); } } }, 
-                        x: { grid: { display: false } } 
+                    scales: {
+                        y: { ticks: { callback: function(v) { return 'Rp ' + v.toLocaleString('id-ID'); } } },
+                        x: { grid: { display: false } }
                     }
                 }
             });
 
-            // --- 3. SETUP GRAPH KONTROL BAWAH KANAN (DONUT/PIE CHART) ---
             const ctxPie = document.getElementById('pieProductProfitChart').getContext('2d');
             let pieChart = new Chart(ctxPie, {
                 type: 'doughnut',
@@ -265,22 +269,12 @@
                 }
             });
 
-            // --- LISTEN DAN REFRESH SEMUA GRAFIK SAAT LIVEWIRE BERUBAH ---
-            window.addEventListener('refresh-charts', event => {
+            window.addEventListener('refresh-side-charts', event => {
                 const d = event.detail.data;
-                
-                // Refresh data Line Chart (termasuk saat user ubah/klik filter tahun)
-                lineChart.data.datasets[0].data = d.line2024;
-                lineChart.data.datasets[1].data = d.line2025;
-                lineChart.data.datasets[2].data = d.line2026;
-                lineChart.update();
-
-                // Refresh data Bar Chart
                 barChart.data.labels = d.barLabels;
                 barChart.data.datasets[0].data = d.barData;
                 barChart.update();
 
-                // Refresh data Pie Chart
                 pieChart.data.labels = d.pieLabels;
                 pieChart.data.datasets[0].data = d.pieData;
                 pieChart.update();
