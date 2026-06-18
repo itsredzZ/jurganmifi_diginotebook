@@ -3,7 +3,7 @@
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
             <h2 class="text-xl font-bold text-gray-900">Catat Penjualan</h2>
-            <p class="text-xs text-gray-500">Input manual atau import dari Excel marketplace</p>
+            <p class="text-xs text-gray-500">Input manual atau import dari Excel/CSV marketplace</p>
         </div>
         
         <div>
@@ -12,7 +12,7 @@
                 <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4-4m4 4V4"/>
                 </svg>
-                Import dari Excel
+                Import dari Excel/CSV
             </button>
         </div>
     </div>
@@ -67,7 +67,9 @@
                                 <div class="flex items-center justify-end gap-1"><span>🏪</span><span>{{ $p->stock_toko }}</span></div>
                             </div>
                         </button>
-                    @endforeach
+                    @empty
+                        <div class="px-4 py-6 text-center text-xs text-gray-400">Produk tidak ditemukan.</div>
+                    @endforelse
                 </div>
             </div>
 
@@ -93,101 +95,58 @@
                 
                 @if($selectedProduct)
                     <div class="space-y-3">
-                        {{-- Row: Produk --}}
                         <div class="flex justify-between items-start text-sm border-b border-gray-100 pb-2.5">
                             <span class="text-gray-400 font-medium">Produk</span>
-                            <span class="font-semibold text-gray-800 text-right max-w-[240px] leading-tight">
-                                {{ $selectedProduct->name }}
-                            </span>
+                            <span class="font-semibold text-gray-800 text-right max-w-[240px] leading-tight">{{ $selectedProduct->name }}</span>
                         </div>
-                        
-                        {{-- Row: Platform --}}
                         <div class="flex justify-between items-center text-sm border-b border-gray-100 pb-2.5">
                             <span class="text-gray-400 font-medium">Platform</span>
-                            <span class="rounded bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700 tracking-wide uppercase">
-                                {{ $platform }}
-                            </span>
+                            <span class="rounded bg-green-50 px-2 py-0.5 text-xs font-bold text-green-700 tracking-wide uppercase">{{ $platform }}</span>
                         </div>
-                        
-                        {{-- Row: Stok Tersedia --}}
                         <div class="flex justify-between items-center text-sm border-b border-gray-100 pb-2.5">
                             <span class="text-gray-400 font-medium">Stok tersedia</span>
-                            <span class="font-semibold text-gray-800 font-mono">
-                                {{ $selectedProduct->total_stock }} unit
-                            </span>
+                            <span class="font-semibold text-gray-800 font-mono">{{ $selectedProduct->total_stock }} unit</span>
                         </div>
-                        
-                        {{-- Row: Jumlah Terjual --}}
                         <div class="flex justify-between items-center text-sm border-b border-gray-100 pb-2.5">
                             <span class="text-gray-400 font-medium">Jumlah terjual</span>
-                            <span class="font-semibold text-gray-800 font-mono">
-                                {{ $quantity }} unit
-                            </span>
+                            <span class="font-semibold text-gray-800 font-mono">{{ $quantity }} unit</span>
                         </div>
-                        
-                        {{-- Row: Harga Satuan --}}
                         <div class="flex justify-between items-center text-sm border-b border-gray-100 pb-2.5">
                             <span class="text-gray-400 font-medium">Harga satuan</span>
-                            <span class="font-semibold text-gray-800 font-mono">
-                                Rp {{ number_format($selectedProduct->sell_price, 0, ',', '.') }}
-                            </span>
+                            <span class="font-semibold text-gray-800 font-mono">Rp {{ number_format($selectedProduct->sell_price, 0, ',', '.') }}</span>
                         </div>
-                        
-                        {{-- Row: Total Penjualan --}}
                         <div class="flex justify-between items-baseline pt-1 pb-1">
                             <span class="text-sm font-bold text-gray-800">Total Penjualan</span>
-                            <span class="text-xl font-extrabold text-gray-900 font-mono tracking-tight">
-                                Rp {{ number_format($previewRevenue, 0, ',', '.') }}
-                            </span>
+                            <span class="text-xl font-extrabold text-gray-900 font-mono tracking-tight">Rp {{ number_format($previewRevenue, 0, ',', '.') }}</span>
                         </div>
-                        
-                        {{-- Box Hijau Laba Bersih & Margin --}}
                         <div class="rounded-xl bg-emerald-50 border border-emerald-100 p-4 flex justify-between items-center mt-1">
                             <div class="space-y-0.5">
                                 <p class="text-xs font-bold text-emerald-800">Keuntungan Bersih</p>
                                 <p class="text-xs text-emerald-600 font-medium">Margin: {{ $previewMargin }}%</p>
                             </div>
-                            <div class="text-lg font-black text-emerald-600 font-mono">
-                                Rp {{ number_format($previewProfit, 0, ',', '.') }}
-                            </div>
+                            <div class="text-lg font-black text-emerald-600 font-mono">Rp {{ number_format($previewProfit, 0, ',', '.') }}</div>
                         </div>
                     </div>
                 @else
-                    {{-- State Kosong --}}
                     <div class="py-12 text-center space-y-3 text-gray-400 flex flex-col justify-center items-center">
                         <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-gray-50 text-gray-300">
-                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 0a2 2 0 110 4 2 2 0 010-4z"/>
-                            </svg>
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 0a2 2 0 110 4 2 2 0 010-4z"/></svg>
                         </div>
                         <p class="text-xs font-medium text-gray-400">Pilih produk dari daftar di kiri</p>
                     </div>
                 @endif
             </div>
 
-            {{-- 2. Box Panduan Import Excel (KEMBALI DI SINI) --}}
+            {{-- 2. Box Panduan Import Excel/CSV --}}
             <div class="rounded-xl border border-blue-100 bg-blue-50/50 p-5 space-y-2.5">
-                <h4 class="text-sm font-bold text-blue-900">Import Excel</h4>
+                <h4 class="text-sm font-bold text-blue-900">Import Excel / CSV</h4>
                 <ul class="space-y-1.5 text-xs font-medium text-blue-700 list-inside">
-                    <li class="flex items-start gap-1">
-                        <span class="text-blue-400">•</span>
-                        <span>Klik "Import dari Excel" di pojok kanan atas</span>
-                    </li>
-                    <li class="flex items-start gap-1">
-                        <span class="text-blue-400">•</span>
-                        <span>Pilih marketplace dan upload file laporan</span>
-                    </li>
-                    <li class="flex items-start gap-1">
-                        <span class="text-blue-400">•</span>
-                        <span>Sistem otomatis mendeteksi kolom & mencocokkan produk</span>
-                    </li>
-                    <li class="flex items-start gap-1">
-                        <span class="text-blue-400">•</span>
-                        <span>Review dan konfirmasi sebelum diimport</span>
-                    </li>
+                    <li class="flex items-start gap-1"><span class="text-blue-400">•</span><span>Klik "Import dari Excel/CSV" di pojok kanan atas</span></li>
+                    <li class="flex items-start gap-1"><span class="text-blue-400">•</span><span>Pilih marketplace dan upload file laporan (.xlsx, .xls, atau .csv)</span></li>
+                    <li class="flex items-start gap-1"><span class="text-blue-400">•</span><span>Sistem otomatis mendeteksi kolom yang relevan, meskipun file punya banyak kolom lain (alamat, ongkir, dll) — kolom tersebut otomatis diabaikan</span></li>
+                    <li class="flex items-start gap-1"><span class="text-blue-400">•</span><span>Transaksi yang dibatalkan/diretur otomatis dilewati jika file memuat kolom status</span></li>
                 </ul>
             </div>
-
         </div>
     </div>
 
@@ -237,7 +196,7 @@
     {{-- WINDOW MODAL POPUP: IMPORT LAPORAN --}}
     @if($showImportModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-gray-900/50 backdrop-blur-xs transition-opacity">
-            <div class="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl space-y-5 mx-4">
+            <div class="relative w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl space-y-5 mx-4 my-8">
                 
                 {{-- Header Modal --}}
                 <div class="flex items-start justify-between">
@@ -248,8 +207,12 @@
                             </svg>
                         </div>
                         <div>
-                            <h3 class="text-base font-bold text-gray-900">Import Laporan Penjualan</h3>
-                            <p class="text-xs text-gray-400">Tokopedia, Shopee, TikTok Shop, Lazada, atau format Excel kustom</p>
+                            <h3 class="text-base font-bold text-gray-900">
+                                {{ $importStep === 'upload' ? 'Import Laporan Penjualan' : 'Konfirmasi Data Import' }}
+                            </h3>
+                            <p class="text-xs text-gray-400">
+                                {{ $importStep === 'upload' ? 'Tokopedia, Shopee, TikTok Shop, Lazada, atau format Excel/CSV kustom' : 'Periksa ringkasan analisa sebelum disimpan ke database' }}
+                            </p>
                         </div>
                     </div>
                     <button type="button" wire:click="closeImportModal" class="rounded-lg p-1 text-gray-400 hover:bg-gray-50 hover:text-gray-600">
@@ -257,63 +220,124 @@
                     </button>
                 </div>
 
-                {{-- Marketplace Pill Selector --}}
-                <div class="space-y-2">
-                    <label class="block text-xs font-semibold text-gray-700">Platform Marketplace</label>
-                    <div class="flex flex-wrap gap-2">
-                        @foreach(['Tokopedia', 'Shopee', 'TikTok Shop', 'Lazada', 'Manual', 'Lainnya'] as $pImp)
-                            <button type="button" wire:click="$set('importPlatform', '{{ $pImp }}')"
-                                    class="rounded-full px-3.5 py-1.5 text-xs font-medium transition-all
-                                    {{ $importPlatform === $pImp ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
-                                {{ $pImp }}
-                            </button>
-                        @endforeach
-                    </div>
-                </div>
+                                {{-- KONDISI 1: STEP UPLOAD (Drag & Drop) --}}
+                @if($importStep === 'upload')
+                    <div class="space-y-4">
+                        <div class="space-y-2">
+                            <label class="block text-xs font-semibold text-gray-700">Platform Marketplace</label>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach(['Tokopedia', 'Shopee', 'TikTok Shop', 'Lazada', 'Manual', 'Lainnya'] as $pImp)
+                                    <button type="button" wire:click="$set('importPlatform', '{{ $pImp }}')"
+                                            class="rounded-full px-3.5 py-1.5 text-xs font-medium transition-all
+                                            {{ $importPlatform === $pImp ? 'bg-blue-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200' }}">
+                                        {{ $pImp }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
 
-                {{-- Area Dropzone File Drag & Drop --}}
-                <div class="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-blue-400 bg-blue-50/10 px-6 py-12 text-center transition-colors hover:bg-blue-50/20">
-                    <input type="file" wire:model="excelFile" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
-                    
-                    <div class="space-y-2 pointer-events-none">
-                        <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                        </svg>
-                        
-                        @if ($excelFile)
-                            <p class="text-sm font-semibold text-blue-600 font-mono">{{ $excelFile->getClientOriginalName() }}</p>
-                            <p class="text-xs text-gray-400">Berkas siap diproses, klik tombol konfirmasi di bawah.</p>
-                        @else
-                            <p class="text-sm font-semibold text-gray-800">Drag & drop file Excel di sini</p>
-                            <p class="text-xs text-gray-400">atau klik untuk memilih file</p>
-                            <p class="text-[10px] text-gray-400">Format yang didukung: .xlsx, .xls, .csv</p>
+                        {{-- TAMBAHKAN CHECKBOX INI --}}
+                        <label class="flex items-center gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50/50 cursor-pointer">
+                            <input type="checkbox" wire:model.live="isHistoricalImport" class="rounded border-gray-300 text-amber-600 shadow-sm focus:ring-amber-500">
+                            <div class="text-xs">
+                                <span class="font-bold text-amber-900">Mode Riwayat (Historis)</span>
+                                <p class="text-amber-700 mt-0.5">Centang jika ini data masa lalu. Sistem tidak akan memotong stok inventori saat ini.</p>
+                            </div>
+                        </label>
+
+                        {{-- Lanjut ke dropzone file... --}}
+
+                        <div class="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-blue-400 bg-blue-50/10 px-6 py-12 text-center transition-colors hover:bg-blue-50/20">
+                            <input type="file" wire:model="excelFile" accept=".xlsx,.xls,.csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                            <div class="space-y-2 pointer-events-none">
+                                <svg class="mx-auto h-10 w-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                @if ($excelFile)
+                                    <p class="text-sm font-semibold text-blue-600 font-mono">{{ $excelFile->getClientOriginalName() }}</p>
+                                    <p class="text-xs text-gray-400">Berkas siap diproses, klik tombol di bawah.</p>
+                                @else
+                                    <p class="text-sm font-semibold text-gray-800">Drag & drop file Excel/CSV di sini</p>
+                                    <p class="text-xs text-gray-400">atau klik untuk memilih file</p>
+                                    <p class="text-[10px] text-gray-400">Format yang didukung: .xlsx, .xls, .csv</p>
+                                @endif
+                            </div>
+                        </div>
+                        @error('excelFile') <p class="text-xs text-red-600 -mt-2 px-1">{{ $message }}</p> @enderror
+
+                        <div class="rounded-xl border border-gray-100 bg-gray-50/50 p-4 space-y-2 text-xs text-gray-500">
+                            <h4 class="font-bold text-gray-700">Tips Import:</h4>
+                            <ul class="list-disc list-inside space-y-1 pl-1">
+                                <li>Sistem otomatis mendeteksi kolom: Nama Produk, Jumlah, Tanggal — kolom lain otomatis diabaikan</li>
+                                <li>Produk akan dicocokkan otomatis dengan inventori berdasarkan nama</li>
+                                <li>Transaksi berstatus selain "Completed/Selesai" otomatis dilewati</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                {{-- KONDISI 2: STEP PREVIEW (Hasil Analisa) --}}
+                @elseif($importStep === 'preview')
+                    <div class="space-y-4">
+                        {{-- Kartu Statistik Ringkas --}}
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="rounded-lg bg-green-50 p-4 text-center border border-green-100">
+                                <p class="text-3xl font-extrabold text-green-600">{{ $previewMatchedCount }}</p>
+                                <p class="text-xs text-green-700 font-medium mt-1">Transaksi Siap Import</p>
+                            </div>
+                            <div class="rounded-lg bg-gray-50 p-4 text-center border border-gray-100">
+                                <p class="text-3xl font-extrabold text-gray-500">{{ $previewTotalRows }}</p>
+                                <p class="text-xs text-gray-500 font-medium mt-1">Total Baris Terbaca</p>
+                            </div>
+                        </div>
+
+                        {{-- Peringatan / Info Tambahan --}}
+                        @if($previewSkippedStatus > 0 || $previewPartialStockCount > 0 || $previewSkippedNoStock > 0)
+                        <div class="rounded-lg bg-amber-50 border border-amber-200 p-3 text-xs text-amber-800 space-y-1">
+                            <p class="font-semibold mb-1">Catatan Penyesuaian:</p>
+                            @if($previewSkippedStatus > 0)<p>• {{$previewSkippedStatus}} baris dilewati (Status belum selesai/dibatalkan).</p>@endif
+                            @if($previewPartialStockCount > 0)<p>• {{$previewPartialStockCount}} produk dipotong sebagian (Stok kurang dari jumlah pesanan).</p>@endif
+                            @if($previewSkippedNoStock > 0)<p>• {{$previewSkippedNoStock}} baris dilewati (Stok habis sama sekali).</p>@endif
+                        </div>
+                        @endif
+
+                        {{-- List Produk Tidak Cocok --}}
+                        @if(!empty($previewUnmatched))
+                        <div class="rounded-xl bg-red-50 border border-red-200 p-4 text-sm text-red-800 space-y-2">
+                            <p class="font-semibold">⚠️ {{ count($previewUnmatched) }} nama produk tidak ditemukan di katalog:</p>
+                            <ul class="list-disc list-inside space-y-0.5 text-xs max-h-32 overflow-y-auto">
+                                @foreach ($previewUnmatched as $name => $qty)
+                                    <li>{{ $name }} <span class="text-red-600 font-mono">(qty: {{ $qty }})</span></li>
+                                @endforeach
+                            </ul>
+                            <p class="text-xs text-red-600 mt-2">Transaksi produk ini tidak akan diimport. Anda bisa melanjutkan import untuk produk yang cocok.</p>
+                        </div>
                         @endif
                     </div>
-                </div>
-                @error('excelFile') <p class="text-xs text-red-600 -mt-2 px-1">{{ $message }}</p> @enderror
-
-                {{-- Tips Info Box --}}
-                <div class="rounded-xl border border-gray-100 bg-gray-50/50 p-4 space-y-2 text-xs text-gray-500">
-                    <h4 class="font-bold text-gray-700">Tips Import:</h4>
-                    <ul class="list-disc list-inside space-y-1 pl-1 text-gray-500">
-                        <li>Sistem akan otomatis mendeteksi kolom: Nama Produk, Jumlah, Harga, Tanggal</li>
-                        <li>Produk akan dicocokkan otomatis dengan inventori berdasarkan nama</li>
-                        <li>Anda bisa review dan koreksi pencocokan sebelum konfirmasi</li>
-                        <li>Untuk Tokopedia: download dari menu Penjualan &rarr; Laporan &rarr; Export Excel</li>
-                        <li>Untuk Shopee: download dari Pesanan Saya &rarr; Export &rarr; Order</li>
-                    </ul>
-                </div>
+                @endif
 
                 {{-- Footer Button --}}
                 <div class="flex justify-end gap-2 border-t border-gray-100 pt-4">
-                    <button type="button" wire:click="closeImportModal" class="rounded-lg bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-200 transition-colors">
-                        Batal
-                    </button>
-                    <button type="button" wire:click="importExcel" wire:loading.attr="disabled"
-                            class="rounded-lg bg-blue-500 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-600 transition-colors inline-flex items-center gap-1.5">
-                        <span wire:loading class="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                        Mulai Import Data
-                    </button>
+                    @if($importStep === 'upload')
+                        <button type="button" wire:click="closeImportModal" class="rounded-lg bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-200 transition-colors">
+                            Batal
+                        </button>
+                        <button type="button" wire:click="previewImport" wire:loading.attr="disabled"
+                                class="rounded-lg bg-blue-500 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-600 transition-colors inline-flex items-center gap-1.5">
+                            <svg wire:loading wire:target="previewImport" class="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" fill="none" viewBox="0 0 24 24"></svg>
+                            <span wire:loading.remove wire:target="previewImport">Analisis File</span>
+                            <span wire:loading wire:target="previewImport">Menganalisa...</span>
+                        </button>
+                    @else
+                        <button type="button" wire:click="cancelPreview" class="rounded-lg bg-gray-100 px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-200 transition-colors">
+                            Kembali / Batal
+                        </button>
+                        <button type="button" wire:click="confirmImport" wire:loading.attr="disabled"
+                                class="rounded-lg bg-emerald-500 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-600 transition-colors inline-flex items-center gap-1.5">
+                            <svg wire:loading wire:target="confirmImport" class="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" fill="none" viewBox="0 0 24 24"></svg>
+                            <span wire:loading.remove wire:target="confirmImport">Konfirmasi & Simpan ke Database</span>
+                            <span wire:loading wire:target="confirmImport">Menyimpan Data...</span>
+                        </button>
+                    @endif
                 </div>
 
             </div>
