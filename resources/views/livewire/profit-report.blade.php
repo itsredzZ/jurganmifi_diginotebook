@@ -108,6 +108,21 @@
         </div>
     </div>
 
+    <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm space-y-4">
+        <h3 class="font-bold text-gray-900 text-sm">Strategi Meningkatkan Keuntungan</h3>
+        <p class="text-sm text-gray-600 leading-relaxed">
+            Berdasarkan analisis data penjualan, beberapa strategi kunci untuk meningkatkan keuntungan Juragan Mifi meliputi:
+        </p>
+        <ul class="list-disc list-inside text-sm text-gray-600 space-y-1">
+            <li><strong>Optimasi Harga Dinamis:</strong> Menyesuaikan harga berdasarkan permintaan dan kompetisi untuk memaksimalkan margin.</li>
+            <li><strong>Fokus pada Produk dengan Margin Tinggi:</strong> Meningkatkan promosi dan stok produk yang memberikan keuntungan lebih besar.</li>
+            <li><strong>Efisiensi Operasional:</strong> Mengurangi biaya melalui negosiasi dengan supplier dan optimasi proses pengiriman.</li>
+        </ul>
+        <a href="{{ route('business-strategy') }}" class="inline-block mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-xs hover:bg-blue-700 transition-colors">
+            Lihat Strategi Lengkap
+        </a>
+    </div>
+
     {{-- DUA GRAFIK BAWAH --}}
     <div class="grid gap-6 lg:grid-cols-2">
         <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm space-y-4">
